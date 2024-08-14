@@ -28,4 +28,7 @@ urlpatterns = [
     path('wibu_catalog/', include('wibu_catalog.urls')),
     path('', RedirectView.as_view(url='wibu_catalog/')),
     path('accounts/', include('django.contrib.auth.urls')),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

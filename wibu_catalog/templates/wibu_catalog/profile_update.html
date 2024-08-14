@@ -1,0 +1,34 @@
+{% extends "base_generic.html" %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "User info update" %}
+{% endblock %}
+
+{% block content %}
+  <h1>{% trans "Updating personal infomation:" %}</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div>
+      <label for="id_username">{% trans "Username" %}:</label>
+      {{ form.username }}
+    </div>
+    <div>
+      <label for="id_email">{% trans "Email" %}:</label>
+      {{ form.email }}
+    </div>
+    <div>
+      <label for="id_dateOfBirth">{% trans "DoB" %}:</label>
+      {{ form.dateOfBirth }}
+    </div>
+    <div>
+      <label for="id_profilePicture">{% trans "Profile picture" %}:</label>
+      {{ form.profilePicture }}
+      {% if request.user.profilePicture %}
+        <p><img src="{{ request.user.profilePicture.url }}" alt="{% trans 'Current profile picture' %}" width="100"></p>
+      {% endif %}
+    </div>
+    <button type="submit">{% trans "Save" %}</button>
+  </form>
+  <a href="{% url 'profile-detail' %}">{% trans "Return to profile." %}</a>
+{% endblock %}
