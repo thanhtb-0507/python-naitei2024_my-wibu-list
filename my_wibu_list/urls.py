@@ -15,7 +15,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.urls import include
+
+# Need to read more about the 4 line below
+from django.views.generic import RedirectView
+from locallibrary import settings
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-]
+    path('wibu_catalog/', include('wibu_catalog.urls')),
+    path('', RedirectView.as_view(url='wibu_catalog/')),
+    path('accounts/', include('django.contrib.auth.urls')),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
