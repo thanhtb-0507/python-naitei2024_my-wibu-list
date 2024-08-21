@@ -19,4 +19,13 @@ urlpatterns = [
     path('product/',views.list_product,name='product'),
     path('search_content/', views.search_content, name='search_content'),
     path('filter_by_genre/<str:genre>/', views.filter_by_genre, name='filter_by_genre'),
+
+    # url mapping for login logout
+    path('login/', views.LoginView.as_view(), name='login'),
+    path('logout/', views.logout, name='logout'),
+
+    # url mapping for comment
+    path('post_comment/<int:content_id>/', views.post_comment, name='post_comment'),
+    path('edit_comment/<str:comment_id>', views.edit_comment, name='edit_comment'),
+    path('delete_comment/<int:comment_id>/', views.delete_comment, name='delete_comment'),
 ]

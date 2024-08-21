@@ -149,69 +149,102 @@
         <div class="comments-section">
           <h3>Comments:</h3>
           <div class="comment-box">
-            <textarea placeholder="Write your comment here..."></textarea>
-            <button type="button">Submit</button>
+           <form action="{% url 'post_comment' anime_detail.cid %}" method="POST">
+              {% csrf_token %}
+              <textarea name="content" rows="4" cols="50" placeholder="Write your comment here..."></textarea>
+              <button type="submit">Submit</button>
+            </form>
+
           </div>
 
           <div class="comment-list">
-            <div class="comment-item">
-              <div class="comment-header">
-                {% comment %}
-                {% if 1=0 %}
-                    <img src="user1-avatar.jpg" alt="User 1 Avatar" class="avatar">
-                {% else %}
-                    <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
-                {% endif %}
-                {% endcomment %}
-                <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
-                <p><strong>User1:</strong> This anime is amazing! I love the characters and the storyline.</p>
+            {% if comments %}
+            {% for comment in comments %}
+              <div class="comment-item">
+                <div class="comment-header">
+                  {% comment %}
+                  {% if 1=0 %}
+                      <img src="user1-avatar.jpg" alt="User 1 Avatar" class="avatar">
+                  {% else %}
+                      <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
+                  {% endif %}
+                  {% endcomment %}
+                  <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
+                  <div class="comment-text">
+                    <p><strong>{{ comment.uid.username }}:</strong> {{ comment.content }}</p>
+                    <p class="cmt-date">{{ comment.dateOfCmt }}</p>
+                  </div>
+                </div>
+                <div class="comment-actions">
+                  <button type="button">Like</button>
+                  <button type="button">Reply</button>
+                  {% if comment.uid == userr%}
+                    <div class="edit-cmt-div">
+                      <button type="button" class="edit-cmt-button">Edit</button>
+                      <form class="edit-cmt-form" action="{% url 'edit_comment' comment.id %}" method="POST">
+                        {% csrf_token %}
+                        <textarea name="content" rows="4" cols="50">{{ comment.content }}</textarea>
+                        <button type="submit">Save</button>
+                        <button type="button" onclick="hideEditForm('{{ comment.id }}')">Cancel</button>
+                      </form>
+                    </div>
+                    <div class="delete-cmt-div">
+                      <button type="button" class="delete-cmt-button">Delete</button>
+                      <div class="confirm-del-cmt">
+                        <p><strong>{% trans 'Are you sure to delete the comment?' %}</strong></p>
+                        <form action="{% url 'delete_comment' comment.id %}" method="post">
+                          {% csrf_token %}
+                          <button type="submit">Yes!</button>
+                          <a href="{% url 'anime_detail' anime_detail.cid %}" style="text-decoration: none; padding: 10px;">
+                            <button type="button">Nah, I'd win.</button>
+                          </a>
+                        </form>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
               </div>
-              <div class="comment-actions">
-                <button type="button">Like</button>
-                <button type="button">Reply</button>
-              </div>
+            {% endfor %}
+
+            <div class="see-more">
+              {% if is_paginated %}
+                <div class="pagination">
+                  <span class="step-links">
+                    {% if comments.has_previous %}
+                      <a href="?page=1">&laquo; first</a>
+                      <a href="?page={{ comments.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                      Page {{ comments.number }} of {{ comments.paginator.num_pages }}.
+                    </span>
+
+                    {% if comments.has_next %}
+                      <a href="?page={{ comments.next_page_number }}">next</a>
+                      <a href="?page={{ comments.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                  </span>
+                </div>
+              {% else %}
+                <a href="https://youtu.be/dQw4w9WgXcQ?si=70pc7Pd7EiJ0aG-3" style="text-decoration: none; color: inherit;">
+                  <button type="button">See more comments</button>
+                </a>
+              {% endif %}
             </div>
 
-            <div class="comment-item">
-              <div class="comment-header">
-                {% comment %}
-                {% if user2-avatar.jpg %}
-                    <img src="user2-avatar.jpg" alt="User 2 Avatar" class="avatar">
-                {% else %}
-                    <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
-                {% endif %}
-                {% endcomment %}
-                <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
-                <p><strong>User2:</strong> The animation quality is top-notch. Highly recommend watching it.</p>
+            {% else %}
+              <div class="comment-item">
+                <div class="comment-header">
+                  <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
+                  <p><strong>WYSI:</strong> No comments yet. Be the first to comment!</p>
+                  <small>30/2/4727</small>
+                </div>
+                <div class="comment-actions">
+                  <button type="button">Like</button>
+                  <button type="button">Reply</button>
+                </div>
               </div>
-              <div class="comment-actions">
-                <button type="button">Like</button>
-                <button type="button">Reply</button>
-              </div>
-            </div>
-
-            <div class="comment-item">
-              <div class="comment-header">
-                {% comment %}
-                {% if user3-avatar.jpg %}
-                    <img src="user3-avatar.jpg" alt="User 3 Avatar" class="avatar">
-                {% else %}
-                    <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
-                {% endif %}
-                {% endcomment %}
-                <img src="{% static 'images/list_detail_default.jpg' %}" class="avatar" alt="Default avatar">
-                <p><strong>User3:</strong> Great plot and visuals. Can't wait for the next season!</p>
-              </div>
-              <div class="comment-actions">
-                <button type="button">Like</button>
-                <button type="button">Reply</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="see-more">
-            <button type="button">See more comments</button>
-          </div>
+            {% endif %}
         </div>
       </div>
 
