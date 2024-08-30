@@ -1,56 +1,63 @@
-from django.test import TestCase, RequestFactory
+from django.test import TestCase, Client
 from django.urls import reverse
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.http import HttpResponseForbidden
-from unittest.mock import patch
 from wibu_catalog.models import Users, Content, FavoriteList
-from wibu_catalog.views import update_favorite_status, _get_user_from_session
 
 class UpdateFavoriteStatusViewTest(TestCase):
 
     def setUp(self):
-        self.factory = RequestFactory()
+        self.client = Client()
+
+        # Create a user with a password
+        self.user = Users.objects.create(
+            uid=1,
+            username='test_user',
+            email='test_user@example.com',
+            password='test_password'  # Ensure password is set correctly
+        )
+
+        # Set password for the user to match the login credentials
+        self.user.set_password('test_password')
+        self.user.save()
+
+        # Create content
+        self.content = Content.objects.create(
+            cid=1,
+            name='Test Anime',
+            category='anime',
+            scoreAvg=8.5
+        )
 
     def test_update_favorite_status_valid(self):
-        user = Users.objects.create(uid=1, username='test_user')
-        content = Content.objects.create(cid=1, name='Test Anime')
+        # Log in the user
+        self.client.login(username='test_user', password='test_password')
 
-        request = self.factory.post(reverse('update_favorite_status', args=[content.cid]), {'status': '1'})
-        request.session = {'user_id': user.uid}
+        # Post request to update favorite status
+        response = self.client.post(reverse('update_favorite_status', args=[self.content.cid]), {'status': '1'})
 
-        middleware = SessionMiddleware()
-        middleware.process_request(request)
-        request.session.save()
+        # Check if the redirect status code is 302
+        self.assertEqual(response.status_code, 302)
 
-        response = update_favorite_status(request, content.cid)
-        favorite = FavoriteList.objects.get(uid=user, cid=content)
+        # Verify that the favorite list entry has been created or updated
+        favorite = FavoriteList.objects.get(uid=self.user, cid=self.content)
+        self.assertEqual(favorite.status, '1')
 
-        self.assertEqual(response.status_code, 302)  # Check if redirected
-        self.assertEqual(favorite.status, '1')  # Check if status updated correctly
+    def test_update_favorite_status_not_logged_in(self):
+        # Post request without logging in
+        response = self.client.post(reverse('update_favorite_status', args=[self.content.cid]), {'status': '1'})
 
-    @patch('wibu_catalog.views._get_user_from_session', return_value=None)
-    def test_update_favorite_status_not_logged_in(self, mock_get_user):
-        content = Content.objects.create(cid=1, name='Test Anime')
-
-        request = self.factory.post(reverse('update_favorite_status', args=[content.cid]), {'status': '1'})
-
-        response = update_favorite_status(request, content.cid)
-
-        self.assertIsInstance(response, HttpResponseForbidden)  # Check if forbidden when not logged in
+        # Check if the redirect status code is 302, indicating redirection to login
+        self.assertEqual(response.status_code, 302)
 
     def test_update_favorite_status_invalid_status(self):
-        user = Users.objects.create(uid=1, username='test_user')
-        content = Content.objects.create(cid=1, name='Test Anime')
+        # Log in the user
+        self.client.login(username='test_user', password='test_password')
 
-        request = self.factory.post(reverse('update_favorite_status', args=[content.cid]), {'status': '4'})
-        request.session = {'user_id': user.uid}
+        # Post request with an invalid status
+        response = self.client.post(reverse('update_favorite_status', args=[self.content.cid]), {'status': '4'})
 
-        middleware = SessionMiddleware()
-        middleware.process_request(request)
-        request.session.save()
+        # Check if the redirect status code is 302
+        self.assertEqual(response.status_code, 302)
 
-        response = update_favorite_status(request, content.cid)
-        favorite_exists = FavoriteList.objects.filter(uid=user, cid=content).exists()
-
-        self.assertEqual(response.status_code, 302)  # Check if redirected
-        self.assertFalse(favorite_exists)  # Check if favorite not created for invalid status
+        # Verify that no favorite list entry was created or updated
+        favorite_exists = FavoriteList.objects.filter(uid=self.user, cid=self.content).exists()
+        self.assertFalse(favorite_exists)

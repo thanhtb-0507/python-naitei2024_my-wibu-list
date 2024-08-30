@@ -39,6 +39,14 @@ from wibu_catalog.constants import (
     TOP_WATCHING_LIMIT, LATEST_CONTENT_LIMIT, TOP_RANKED_LIMIT, ScoreEnum,
     PRODUCTS_PER_PAGE_DETAIL, COMMENTS_PER_PAGE_DETAIL,
 )
+
+# Import models from models.py
+from wibu_catalog.models import (
+    Content, Score, Users, FavoriteList,
+    ScoreList, Comments, Notifications,
+    Product, Order, OrderItems, Feedback,
+)
+
 # Import from forms.py
 from wibu_catalog.forms import (
     LoginForm, ChangePasswordForm, UserRegistrationForm,
@@ -155,50 +163,6 @@ class UserRegistrationView(View):
         )
 
         return redirect('login')
-
-# Comment section:
-def post_comment(request, content_id):
-    userr = _get_user_from_session(request)
-    cmtedContent = get_object_or_404(Content, cid=content_id)
-    if request.method == "POST":
-        form = CommentForm(request.POST)
-        if form.is_valid():
-            comment = form.save(commit=False)
-            comment.cid = cmtedContent
-            comment.uid = userr
-            comment.dateOfCmt = timezone.now().date()
-            comment.save()
-            return redirect("anime_detail", pk=content_id)
-    return redirect("anime_detail", pk=content_id)
-
-
-def edit_comment(request, comment_id):
-    userr = _get_user_from_session(request)
-    try:
-        comment = Comments.objects.get(id=comment_id, uid=userr.uid)
-    except Comments.DoesNotExist:
-        return redirect("anime_detail", pk=comment.cid.cid)
-
-    if request.method == "POST":
-        form = EditCommentForm(request.POST, instance=comment)
-        if form.is_valid():
-            comment.dateOfCmt = timezone.now().date()  # Update the date
-            comment.save()
-            return redirect("anime_detail", pk=comment.cid.cid)
-            # somehow comment.cid = Content.__str__
-    else:
-        form = EditCommentForm(instance=comment)
-
-    return redirect("anime_detail", pk=comment.cid.cid)
-
-
-def delete_comment(request, comment_id):
-    try:
-        comment = Comments.objects.get(id=comment_id)
-        comment.delete()
-    except Comments.DoesNotExist:
-        return redirect("anime_detail", pk=comment.cid.cid)
-    return redirect("anime_detail", pk=comment.cid.cid)
 
 
 # end of Comment section
@@ -343,9 +307,10 @@ def list_product(request):
 
     # Tìm kiếm sản phẩm theo từ khóa
     if query:
-        products_list = Product.objects.filter(name__icontains=query)
+        products_list = Product.objects\
+            .filter(name__icontains=query).order_by('name')
     else:
-        products_list = Product.objects.all()
+        products_list = Product.objects.all().order_by('name')
 
     if sort_by == 'highest_rate':
         products_list = products_list.order_by('-ravg')

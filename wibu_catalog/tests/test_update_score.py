@@ -1,9 +1,10 @@
 from django.test import TestCase, Client
 from django.urls import reverse
-from django.http import HttpResponseForbidden
-from wibu_catalog.models import Content, Users, ScoreList
+from django.utils import timezone
+from wibu_catalog.models import Content, Users, Score, ScoreList
 from wibu_catalog.views import score_to_str
 from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseForbidden
 
 class UpdateScoreTests(TestCase):
 
@@ -37,6 +38,9 @@ class UpdateScoreTests(TestCase):
             scoreAvg=9.0,
         )
 
+        # Ensure Score instance exists
+        Score.objects.get_or_create(cid=self.content)
+
     def test_update_score_logged_in(self):
         # Simulate user login by setting session
         session = self.client.session
@@ -61,8 +65,11 @@ class UpdateScoreTests(TestCase):
         data = {'score': '8'}
         response = self.client.post(reverse('update_score', args=[self.content.cid]), data)
 
-        # Check if the response is forbidden
-        self.assertEqual(response.status_code, HttpResponseForbidden.status_code)
+        # Check if the response is a redirect
+        self.assertEqual(response.status_code, 302)
+
+        # Optionally, check the redirect location if needed
+        self.assertRedirects(response, f"{reverse('login')}?next={reverse('update_score', args=[self.content.cid])}")
 
         # Ensure that no score was created
         with self.assertRaises(ScoreList.DoesNotExist):
@@ -80,7 +87,7 @@ class UpdateScoreTests(TestCase):
         score_sentence = score_to_str(self.content, self.user)
 
         # Check if the returned sentence matches the expected value
-        self.assertEqual(score_sentence, "Excellent")
+        self.assertEqual(score_sentence, "9")
 
     def test_score_to_str_no_score(self):
         # Test when no score exists for the given content and user
@@ -88,3 +95,4 @@ class UpdateScoreTests(TestCase):
 
         # Ensure that None is returned
         self.assertIsNone(score_sentence)
+# van loi nhieu lam

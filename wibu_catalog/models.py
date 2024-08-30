@@ -276,7 +276,7 @@ class Score(models.Model):
     )
 
     def __str__(self):
-        return f"Scores for Content CID: {str(self.cid)}"
+        return f"Scores for Content CID: {str(self.cid.cid)}"
 
 
 Role_tuple = [(key, value) for key, value in Role_dict.items()]
@@ -425,7 +425,7 @@ class ScoreList(models.Model):
         update_content_score(self.cid.cid)
 
     def __str__(self):
-        return self.score
+        return str(self.score)
 
 
 class Comments(models.Model):
@@ -514,7 +514,7 @@ class Notifications(models.Model):
     )
 
     def __str__(self):
-        return self.notificationId
+        return str(self.notificationId)
 
 
 class Product(models.Model):
